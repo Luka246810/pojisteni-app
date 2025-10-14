@@ -1,0 +1,149 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<th:block th:replace="~{layout :: main(~{::section})}">
+    <section>
+
+        <!--
+          ŠABLONA: Formulář pro vytvoření / editaci pojištěnce
+          Kontext/Model:
+            - p .......... vecera.projekt.entity.Pojisteny (form-backing bean)
+            - back ....... volitelný návratový URL/fragment (např. z pojistky)
+            - pojistkaId . volitelně: ID pojistky, ke které se může po uložení navázat osoba
+            - role ....... volitelně: role osoby v pojistce (POJISTENY/POJISTNIK)
+          Odeslání:
+            - pokud p.id == null → POST /pojistenci (create)
+            - pokud p.id != null → POST /pojistenci/edit/{id} (update)
+          Pozn.:
+            - Avatar je pouze vizuální volba, ukládá se do localStorage (ne do DB).
+        -->
+
+        <!-- Nadpis vlevo + avatar a popisek vpravo -->
+        <div class="d-flex justify-content-start align-items-center gap-5 mb-4">
+            <h1 class="mb-0" th:text="${p.id} == null ? 'Nový pojištěnec' : 'Upravit pojištěnce'">Form</h1>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Náhled avataru (jen UI pomocník) -->
+                <img id="avatarPreview"
+                     src="/img/avatars/jine.png"
+                     alt="Avatar"
+                     style="width:72px;height:72px;object-fit:cover;border:2px solid #0d6efd;border-radius:.5rem;">
+                <small class="text-muted">Neukládá se do databáze, jen vybere ikonku.</small>
+            </div>
+        </div>
+
+        <!-- Formulář: akce se odvíjí od existence p.id -->
+        <form th:object="${p}"
+              th:action="${p.id} == null ? @{/pojistenci} : @{/pojistenci/edit/{id}(id=${p.id})}"
+              method="post" class="row g-4">
+
+            <!-- CSRF (nutné pro všechny POST/PUT/DELETE) -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <!-- identifikátory a návratové parametry -->
+            <input type="hidden" th:field="*{id}"/>
+            <input type="hidden" name="back" th:value="${back}">
+            <input type="hidden" name="back" th:value="${back}">
+            <input type="hidden" name="pojistkaId" th:value="${pojistkaId}">
+            <input type="hidden" name="role" th:value="${role}">
+
+            <!-- ŘÁDEK 1: Jméno, Příjmení, Věk -->
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Jméno</label>
+                    <input class="form-control" th:field="*{jmeno}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Příjmení</label>
+                    <input class="form-control" th:field="*{prijmeni}" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Věk</label>
+                    <input type="number" class="form-control" th:field="*{vek}" min="0" max="120" required>
+                </div>
+            </div>
+
+            <!-- ŘÁDEK 2: Telefon, E-mail, Pohlaví -->
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Telefon</label>
+                    <input class="form-control" th:field="*{telefon}" placeholder="+420 111 222 333" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" class="form-control" th:field="*{email}" placeholder="jan.novak@email.cz">
+                </div>
+                <div class="col-md-2">
+                    <label for="pohlavi" class="form-label">Pohlaví</label>
+                    <select id="pohlavi" name="pohlavi" class="form-select">
+                        <option value="jine" selected>Jiné</option>
+                        <option value="muz">Muž</option>
+                        <option value="zena">Žena</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ŘÁDEK 3: Adresa -->
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Město</label>
+                    <input class="form-control" th:field="*{mesto}" placeholder="Olomouc">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Ulice</label>
+                    <input class="form-control" th:field="*{ulice}" placeholder="Horní">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Č. p.</label>
+                    <input class="form-control" th:field="*{cisloPopisne}" placeholder="12a">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">PSČ</label>
+                    <input class="form-control" th:field="*{psc}" placeholder="779 00" pattern="\d{3}\s?\d{2}">
+                </div>
+            </div>
+
+            <!-- Ovládací tlačítka -->
+            <div class="mt-3">
+                <button class="btn btn-primary">Uložit</button>
+                <!-- Zpět: při editaci na detail, jinak na seznam -->
+                <a class="btn btn-secondary"
+                   th:href="${p != null and p.id != null}
+                ? @{/pojistenci/detail/{id}(id=${p.id})}
+                : @{/pojistenci}">
+                    Zpět
+                </a>
+            </div>
+        </form>
+
+        <!-- Skript: živý náhled avataru a uložení volby do localStorage -->
+        <script>
+            (function () {
+                const form = document.querySelector('form');
+                const sel  = document.getElementById('pohlavi');
+                const img  = document.getElementById('avatarPreview');
+                const base = '/img/avatars/';
+                const update = () => img.src = base + sel.value + '.png';
+
+                // Pokud máme ID (editace), načti uloženou volbu
+                const idEl = document.querySelector('input[name="id"]');
+                if (idEl && idEl.value) {
+                    const saved = localStorage.getItem('pojistenyGender_' + idEl.value);
+                    if (saved) sel.value = saved;
+                }
+
+                sel.addEventListener('change', update);
+                update(); // inicializace náhledu
+
+                // Při odeslání si volbu zapamatuj (jen u editace)
+                if (form) {
+                    form.addEventListener('submit', function () {
+                        if (idEl && idEl.value) {
+                            localStorage.setItem('pojistenyGender_' + idEl.value, sel.value);
+                        }
+                    });
+                }
+            })();
+        </script>
+
+    </section>
+</th:block>
+</html>

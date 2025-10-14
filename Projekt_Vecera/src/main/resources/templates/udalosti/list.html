@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<th:block th:replace="~{layout :: main(~{::section})}">
+    <section class="container my-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h4 mb-0">Pojistné události</h1>
+            <!-- vytváření nové události se dělá z detailu pojištěného, proto tu tlačítko není -->
+        </div>
+
+        <!-- filtr -->
+        <form class="row g-2 mb-3" method="get" th:action="@{/udalosti}">
+            <div class="col-sm-8 col-md-6 col-lg-5">
+                <input type="text" class="form-control" name="q" th:value="${q}"
+                       placeholder="Hledat v popisu / ID pojištěného / datu (9.10.2025,9.2025)">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-secondary">Hledat</button>
+            </div>
+            <div class="col-auto" th:if="${q}">
+                <a class="btn btn-link" th:href="@{/udalosti}">Zrušit filtr</a>
+            </div>
+        </form>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width:12rem;">Datum</th>
+                        <th>Popis</th>
+                        <th style="width:12rem;">Škoda</th>
+                        <th style="width:9rem;">Stav</th>
+                        <th style="width:16rem;" class="text-end">Akce</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="u : ${udalosti}">
+                        <td th:text="${#temporals.format(u.datum,'d.M.yyyy')}">—</td>
+                        <td th:text="${u.popis}">—</td>
+                        <td th:text="${#numbers.formatDecimal(u.skoda,1,'WHITESPACE',2,'POINT')} + ' Kč'">0 Kč</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${u.stav}=='NOVA' ? ' text-bg-warning' :
+                                                  (${u.stav}=='RESENA' ? ' text-bg-info' : ' text-bg-success')"
+                                  th:text="${u.stav}">NOVA</span>
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" th:href="@{/udalosti/detail/{id}(id=${u.id})}">Detail</a>
+
+                            <span sec:authorize="hasRole('ADMIN')">
+                              <a class="btn btn-sm btn-warning ms-1" th:href="@{/udalosti/edit/{id}(id=${u.id})}">Editovat</a>
+                              <form th:action="@{/udalosti/delete/{id}(id=${u.id})}" method="post" class="d-inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button class="btn btn-sm btn-danger ms-1" onclick="return confirm('Smazat událost?')">Odstranit</button>
+                              </form>
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${udalosti == null or #lists.isEmpty(udalosti)}">
+                        <td colspan="5" class="text-center text-muted py-4">Žádné záznamy</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </section>
+</th:block>
+</html>

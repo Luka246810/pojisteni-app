@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nastavení účtu</title>
+</head>
+<body th:attr="data-username=${#authentication.name}">
+<th:block th:replace="~{layout :: main(~{::section})}">
+    <section>
+        <h1 class="mb-4">Nastavení účtu</h1>
+        <!-- krátké vysvětlení stránky -->
+        <div class="alert alert-light border">
+            Upravte své osobní údaje. Změny se projeví na vašem profilu.
+        </div>
+
+        <!-- Formulář účtu: POST /ucet/profil; model attr 'p' (Pojisteny) -->
+        <form th:action="@{/ucet/profil}" th:object="${p}" method="post" class="row g-3" style="max-width:960px;">
+            <!-- CSRF -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <!-- Skryté ID – využívá ho JS (klíč pro localStorage) -->
+            <input type="hidden" th:field="*{id}"/>
+
+            <!-- Avatar – pouze lokální volba (neukládá se do DB) -->
+            <div class="col-12">
+                <label class="form-label">Avatar (lokálně)</label>
+                <div class="d-flex align-items-center gap-3">
+                    <img id="avatarPreview" src="/img/avatars/jine.png" alt="Avatar"
+                         style="width:64px;height:64px;border-radius:.5rem;border:1px solid #dee2e6;object-fit:cover;">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary" onclick="accSetAvatar('muz')">Muž</button>
+                        <button type="button" class="btn btn-outline-danger"  onclick="accSetAvatar('zena')">Žena</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="accSetAvatar('jine')">Jiné</button>
+                    </div>
+                </div>
+                <div class="form-text">Volba se ukládá pouze do tohoto prohlížeče (neukládá se do databáze).</div>
+            </div>
+
+            <!-- Osobní údaje -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light fw-semibold">
+                    Osobní údaje
+                </div>
+                <div class="card-body">
+                    <!-- jméno / příjmení / věk -->
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-4">
+                            <label for="inpJmeno" class="form-label">Jméno</label>
+                            <input id="inpJmeno" type="text" class="form-control"
+                                   th:field="*{jmeno}" placeholder="Lukáš" autocomplete="given-name">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="inpPrijmeni" class="form-label">Příjmení</label>
+                            <input id="inpPrijmeni" type="text" class="form-control"
+                                   th:field="*{prijmeni}" placeholder="Večeřa" autocomplete="family-name">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="inpVek" class="form-label">Věk</label>
+                            <input id="inpVek" type="number" min="0" max="120" class="form-control"
+                                   th:field="*{vek}" placeholder="22" inputmode="numeric">
+                        </div>
+                    </div>
+
+                    <!-- telefon / email -->
+                    <div class="row g-3 align-items-center mt-1">
+                        <div class="col-md-4">
+                            <label for="inpTelefon" class="form-label">Telefon</label>
+                            <input id="inpTelefon" type="tel" class="form-control"
+                                   th:field="*{telefon}" placeholder="+420 123 456 789"
+                                   autocomplete="tel" inputmode="tel">
+                        </div>
+
+                        <div class="col-md-5">
+                            <label for="inpEmail" class="form-label">E-mail</label>
+                            <input id="inpEmail" type="email" class="form-control"
+                                   th:field="*{email}" placeholder="vas@email.cz"
+                                   autocomplete="email">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pohlaví záměrně neukládáme (jen lokální avatar) -->
+
+            <!-- Adresa -->
+            <div class="col-12 mt-2">
+                <div class="card">
+                    <div class="card-header bg-light fw-semibold">Adresa</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Město</label>
+                                <input class="form-control" type="text" th:field="*{mesto}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Číslo popisné</label>
+                                <input class="form-control" type="text" th:field="*{cisloPopisne}" placeholder="123">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Ulice</label>
+                                <input class="form-control" type="text" th:field="*{ulice}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">PSČ</label>
+                                <input class="form-control" type="text" th:field="*{psc}" placeholder="123 45" inputmode="numeric">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Akce -->
+            <div class="col-12 d-flex flex-wrap gap-2 mt-2">
+
+                <!-- Zpět domů -->
+                <a class="btn btn-outline-success" th:href="@{/}">
+                    Domovská stránka
+                </a>
+
+                <!-- Moje pojistky: dostupné až po uložení profilu (má-li ID) -->
+                <a class="btn btn-warning"
+                   th:if="${p.id != null}"
+                   th:href="@{/ucet/moje-pojisteni}">
+                    Moje pojištění
+                </a>
+
+                <!-- disabled varianta, když profil zatím nemá ID -->
+                <button class="btn btn-warning" type="button" th:if="${p.id == null}" disabled
+                        title="Nejprve uložte svůj profil">
+                    Moje pojištění
+                </button>
+
+                <!-- Uložení -->
+                <button class="btn btn-primary" type="submit">Uložit změny</button>
+            </div>
+
+        </form>
+    </section>
+</th:block>
+
+<script>
+    /* Nastavení avataru (lokálně v prohlížeči) */
+    function accSetAvatar(g){
+      var idEl = document.querySelector('input[name="id"]');
+      var id = idEl && idEl.value ? idEl.value : null;
+      var uname = document.body.getAttribute('data-username');
+      var key = id ? ('pojistenyGender_' + id) : ('pojistenyGender_user_' + uname);
+
+      localStorage.setItem(key, g);
+      var prev = document.getElementById('avatarPreview');
+      if (prev) prev.src = '/img/avatars/' + g + '.png';
+    }
+
+    /* Inicializace náhledu avataru z localStorage (podle ID profilu nebo username) */
+    (function(){
+      var idEl = document.querySelector('input[name="id"]');
+      var id = idEl && idEl.value ? idEl.value : null;
+      var uname = document.body.getAttribute('data-username');
+      var key = id ? ('pojistenyGender_' + id) : ('pojistenyGender_user_' + uname);
+
+      var saved = localStorage.getItem(key) || 'jine';
+      var prev = document.getElementById('avatarPreview');
+      if (prev) prev.src = '/img/avatars/' + saved + '.png';
+    })();
+</script>
+</body>
+</html>

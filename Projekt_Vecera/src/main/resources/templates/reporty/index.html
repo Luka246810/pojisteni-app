@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporty & statistiky</title>
+    <!-- Pokud používáš globální layout s CSS/Bootstrapem, tady není nutné nic přidávat -->
+</head>
+<body>
+<th:block th:replace="~{layout :: main(~{::section})}">
+    <section class="container py-3">
+
+        <!-- Hlavní hlavička stránky + rychlý návrat -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">Reporty &amp; statistiky</h1>
+            <a class="btn btn-primary" th:href="@{/}">
+                ⬅ Zpět na hlavní stránku
+            </a>
+        </div>
+
+        <!-- KARTY: „snapshot“ (rychlý přehled) -->
+        <!-- Pozn.: th:text doplňuji o null-safe fallback, ať to nespadne na prázdných datech -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card shadow-sm h-100 stat">
+                    <div class="card-body">
+                        <div class="text-muted">Počet pojištěných</div>
+                        <div class="fs-3 fw-bold" th:text="${snap != null ? snap.pocetPojistenych() : 0}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card shadow-sm h-100 stat">
+                    <div class="card-body">
+                        <div class="text-muted">Aktivní pojistky</div>
+                        <div class="fs-3 fw-bold" th:text="${snap != null ? snap.pojisteniAktivni() : 0}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card shadow-sm h-100 stat">
+                    <div class="card-body">
+                        <div class="text-muted">Expirované pojistky</div>
+                        <div class="fs-3 fw-bold" th:text="${snap != null ? snap.pojisteniExpirovane() : 0}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="card shadow-sm h-100 stat">
+                    <div class="card-body">
+                        <div class="text-muted">Suma škod (YTD)</div>
+                        <!-- čísla hezky formátovaná; když snap.sumaSkodYTD == null, zobraz 0 -->
+                        <div class="fs-3 fw-bold"
+                             th:text="${snap != null && snap.sumaSkodYTD() != null
+                                      ? #numbers.formatDecimal(snap.sumaSkodYTD(),1,'WHITESPACE',2,'POINT') + ' Kč'
+                                      : '0 Kč'}">0 Kč</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- TABULKA: Aktivní pojistky podle typu -->
+            <!-- Pozn.: Export linky mají class 'export-btn' pro snadné stylování; můžeš přidat download atribut podle potřeby -->
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100 section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Aktivní pojistky podle typu</span>
+                        <a class="btn btn-sm btn-outline-success export-btn"
+                           th:href="@{/reporty/export(typ='aktivni-podle-typu')}" rel="nofollow">Export CSV</a>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                            <tr>
+                                <th>Typ</th>
+                                <th class="text-end">Počet</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="r : ${aktivniTypy}">
+                                <td th:text="${r.label()}">Pojištění bytu</td>
+                                <td class="text-end" th:text="${r.value()}">12</td>
+                            </tr>
+                            <tr th:if="${aktivniTypy == null or #lists.isEmpty(aktivniTypy)}">
+                                <td colspan="2" class="text-muted">Žádná data</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABULKA: Měsíční trend nových pojistek -->
+            <!-- Pozn.: period je např. '2025-01'; můžeš si ho v controlleru převést na '01/2025' pokud chceš lokalizaci -->
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm h-100 section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Měsíční trend nových pojistek</span>
+                        <a class="btn btn-sm btn-outline-success export-btn"
+                           th:href="@{/reporty/export(typ='mesicni-nove')}" rel="nofollow">Export CSV</a>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                            <tr>
+                                <th>Měsíc</th>
+                                <th class="text-end">Počet</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="r : ${mesicniNove}">
+                                <td th:text="${r.period()}">2025-01</td>
+                                <td class="text-end" th:text="${r.count()}">3</td>
+                            </tr>
+                            <tr th:if="${mesicniNove == null or #lists.isEmpty(mesicniNove)}">
+                                <td colspan="2" class="text-muted">Žádná data</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABULKA: Škody dle stavu -->
+            <!-- Pozn.: Sumu/průměr můžeš naformátovat number formatterem kvůli mezerám: #numbers.formatDecimal(...) -->
+            <div class="col-12 col-lg-8">
+                <div class="card shadow-sm h-100 section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Škody podle stavu</span>
+                        <a class="btn btn-sm btn-outline-success export-btn"
+                           th:href="@{/reporty/export(typ='skody-dle-stavu')}" rel="nofollow">Export CSV</a>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                            <tr>
+                                <th>Stav</th>
+                                <th class="text-end">Počet</th>
+                                <th class="text-end">Suma</th>
+                                <th class="text-end">Průměr</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="r : ${skody}">
+                                <td>
+                                    <!-- Malé barevné rozlišení badge podle stavu (volitelné) -->
+                                    <span class="badge"
+                                          th:classappend="${r.stav()}=='NOVA' ? ' text-bg-warning' :
+                                                          (${r.stav()}=='RESENA' ? ' text-bg-info' : ' text-bg-success')"
+                                          th:text="${r.stav()}">NOVA</span>
+                                </td>
+                                <td class="text-end" th:text="${r.pocet()}">0</td>
+                                <td class="text-end"
+                                    th:text="${r.suma() != null ? #numbers.formatDecimal(r.suma(),1,'WHITESPACE',2,'POINT') + ' Kč' : '0 Kč'}">0 Kč</td>
+                                <td class="text-end"
+                                    th:text="${r.prumer() != null ? #numbers.formatDecimal(r.prumer(),1,'WHITESPACE',2,'POINT') + ' Kč' : '0 Kč'}">0 Kč</td>
+                            </tr>
+                            <tr th:if="${skody == null or #lists.isEmpty(skody)}">
+                                <td colspan="4" class="text-muted">Žádná data</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABULKA: Top města -->
+            <div class="col-12 col-lg-4">
+                <div class="card shadow-sm h-100 section">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Top města (počet pojištěných)</span>
+                        <a class="btn btn-sm btn-outline-success export-btn"
+                           th:href="@{/reporty/export(typ='top-mesta')}" rel="nofollow">Export CSV</a>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                            <tr>
+                                <th>Město</th>
+                                <th class="text-end">Počet</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="r : ${mesta}">
+                                <td th:text="${r.mesto()}">Olomouc</td>
+                                <td class="text-end" th:text="${r.pocet()}">5</td>
+                            </tr>
+                            <tr th:if="${mesta == null or #lists.isEmpty(mesta)}">
+                                <td colspan="2" class="text-muted">Žádná data</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</th:block>
+</body>
+</html>

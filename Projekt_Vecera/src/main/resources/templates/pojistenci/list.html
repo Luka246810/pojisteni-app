@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Pojistěnci</title></head>
+<body>
+<!--
+  ŠABLONA: Seznam pojištěnců
+  Kontext/Model:
+    - pojistenci ... List<Pojisteny> (řádky tabulky)
+    - q ............ volitelný dotaz (text ve vyhledávacím poli)
+  Akce:
+    - Hledat (GET /pojistenci?q=...)
+    - Nový pojištěnec (odkaz na formulář)
+    - Detaily/Edit/Smazat na každém řádku
+-->
+<th:block th:replace="~{layout :: main(~{::section})}">
+    <section>
+
+        <!-- Vyhledávání (ID, jméno, telefon) -->
+        <div class="d-flex justify-content-center mb-1">
+            <form class="d-flex gap-2" method="get" th:action="@{/pojistenci}">
+                <input class="form-control" name="q" th:value="${q}" placeholder="Hledat: ID, jméno, telefon">
+                <button class="btn btn-primary" type="submit">Hledat</button>
+                <a class="btn btn-outline-secondary" th:href="@{/pojistenci}">Zrušit vyhledávání</a>
+            </form>
+        </div>
+
+        <!-- Hlavička stránky + tlačítko pro přidání -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="mb-0">Pojistěnci</h2>
+            <a th:href="@{/pojistenci/novy}" class="btn btn-primary">Nový pojištěnec</a>
+        </div>
+
+        <!-- Tabulka výsledků -->
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th style="width:5%">ID</th>
+                    <th style="width:20%">Jméno</th>
+                    <th style="width:30%">Bydliště</th>
+                    <th style="width:20%">Telefon</th>
+                    <th style="width:25%">Akce</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Jeden záznam/řádek -->
+                <tr th:each="p : ${pojistenci}">
+                    <!-- ID -->
+                    <td th:text="${p.id}">1</td>
+
+                    <!-- Jméno => odkaz na detail -->
+                    <td>
+                        <a th:href="@{/pojistenci/detail/{id}(id=${p.id})}"
+                           th:text="${p.jmeno} + ' ' + ${p.prijmeni}">Jan Novák</a>
+                    </td>
+
+                    <!-- Bydliště složené z částí; když vše null, zobrazí '-' -->
+                    <td>
+                        <span th:if="${p.mesto != null}" th:text="${p.mesto}">Město</span>
+                        <span th:if="${p.ulice != null}">, <span th:text="${p.ulice}">Ulice</span></span>
+                        <span th:if="${p.cisloPopisne != null}"> <span th:text="${p.cisloPopisne}">12a</span></span>
+                        <span th:if="${p.psc != null}">, <span th:text="${p.psc}">779 00</span></span>
+
+                        <span th:if="${p.mesto == null and p.ulice == null and p.cisloPopisne == null and p.psc == null}">-</span>
+                    </td>
+
+                    <!-- Telefon (fallback '-') -->
+                    <td th:text="${p.telefon != null ? p.telefon : '-'}">731 584 972</td>
+
+                    <!-- Akce: smazat + editovat -->
+                    <td class="text-center px-2">
+                        <div class="d-inline-flex align-items-center justify-content-center gap-2">
+                            <!-- Odstranit (POST + confirm + CSRF) -->
+                            <form th:action="@{/pojistenci/delete/{id}(id=${p.id})}"
+                                  method="post"
+                                  class="m-0 d-inline"
+                                  onsubmit="return confirm('Opravdu smazat ' + this.dataset.name + '?');"
+                                  th:attr="data-name=${p.jmeno + ' ' + p.prijmeni}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-danger btn-sm">Odstranit</button>
+                            </form>
+
+                            <!-- Editovat -->
+                            <a th:href="@{/pojistenci/edit/{id}(id=${p.id})}"
+                               class="btn btn-warning btn-sm">Editovat</a>
+                        </div>
+                    </td>
+
+                </tr>
+
+                <!-- Prázdný seznam -->
+                <tr th:if="${#lists.isEmpty(pojistenci)}">
+                    <td colspan="5" class="text-center text-muted">Žádní pojištěnci.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+</th:block>
+</body>
+</html>

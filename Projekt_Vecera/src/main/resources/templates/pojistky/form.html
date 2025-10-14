@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<th:block th:replace="~{layout :: main(~{::section})}">
+    <section>
+
+        <h1 class="mb-4"
+            th:text="${t == null or t.id == null} ? 'Přidat pojištění' : 'Upravit pojištění'">Pojistka</h1>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-light fw-semibold">Pojištění</div>
+            <div class="card-body">
+                <!-- Akce volí create/edit podle existence ID -->
+                <form th:action="${t == null or t.id == null}
+                                  ? @{/pojistky/pridat-k-pojistenci/{pojistenyId}(pojistenyId=${pojistenyId})}
+                                  : @{/pojistky/edit/{id}(id=${t.id})}"
+                      method="post" class="row g-3 needs-validation" novalidate>
+
+                    <input type="hidden" name="pid" th:value="${pojistenyId}">
+                    <input type="hidden" name="id" th:value="${t != null ? t.id : ''}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="nazev">Název pojištění</label>
+                        <input id="nazev" class="form-control" name="nazev"
+                               th:value="${t != null ? t.nazev : ''}" placeholder="Pojištění majetku" required>
+                        <div class="invalid-feedback">Zadejte název pojištění.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="castka">Částka</label>
+                        <input id="castka" class="form-control" name="castka"
+                               type="number" step="0.01" min="0"
+                               th:value="${t != null and t.castka != null ? t.castka : ''}" placeholder="1000000" required>
+                        <div class="invalid-feedback">Zadejte částku.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="od">Platnost od</label>
+                        <input id="od" class="form-control" name="platnostOd" type="date"
+                               th:value="${t != null and t.platnostOd != null ? #temporals.format(t.platnostOd,'yyyy-MM-dd') : ''}" required>
+                        <div class="invalid-feedback">Zadejte datum začátku.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="do">Platnost do</label>
+                        <input id="do" class="form-control" name="platnostDo" type="date"
+                               th:value="${t != null and t.platnostDo != null ? #temporals.format(t.platnostDo,'yyyy-MM-dd') : ''}" required>
+                        <div class="invalid-feedback">Zadejte datum konce.</div>
+                    </div>
+
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button class="btn btn-primary" type="submit"
+                                th:text="${t == null or t.id == null} ? 'Uložit' : 'Uložit změny'">Uložit</button>
+
+                        <!-- ZPĚT varianta 1: máme v entitě navázaného pojištěného -->
+                        <a class="btn btn-outline-secondary"
+                           th:if="${t != null and t.pojisteny != null}"
+                           th:href="@{/pojistenci/detail/{id}(id=${t.pojisteny.id})}">
+                            Zpět
+                        </a>
+
+                        <!-- ZPĚT varianta 2: nová pojistka a přišel parametr pojistenyId -->
+                        <a class="btn btn-outline-secondary"
+                           th:if="${(t == null or t.pojisteny == null) and pojistenyId != null}"
+                           th:href="@{/pojistenci/detail/{id}(id=${pojistenyId})}">
+                            Zpět
+                        </a>
+
+                        <!-- ZPĚT varianta 3: fallback na výpis pojistek -->
+                        <a class="btn btn-outline-secondary"
+                           th:if="${(t == null or t.pojisteny == null) and pojistenyId == null}"
+                           th:href="@{/pojistky}">
+                            Zpět
+                        </a>
+
+                        <a class="btn btn-outline-secondary" th:if="${t != null and t.id != null}"
+                           th:href="@{/pojistky/detail/{id}(id=${t.id})}">Zpět na detail pojištění</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Přidat existující / novou osobu k pojistce (jen při EDITACI) -->
+        <div class="card" th:if="${t != null and t.id != null}" sec:authorize="hasRole('ADMIN')">
+            <div class="card-header bg-light fw-semibold">Připojit EXISTUJÍCÍ / NOVOU osobu k pojistce</div>
+            <div class="card-body">
+                <form class="row gy-2 gx-2 align-items-end" method="post"
+                      th:action="@{/pojistky/{id}/pridat-osobu(id=${t.id})}">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Osoba (ID)</label>
+                        <input class="form-control" name="osobaId" type="number" min="1" placeholder="např. 12" required>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" name="role">
+                            <option value="POJISTNIK">Pojistník</option>
+                            <option value="POJISTENY" selected>Pojištěný</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-5 d-flex gap-2 justify-content-end align-items-center">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button class="btn btn-primary" type="submit">Přidat k pojistce</button>
+                        <span>/</span>
+                        <a class="btn btn-primary"
+                           th:href="@{/pojistenci/novy(
+                               back=${'/pojistky/edit/' + t.id},
+                               pojistkaId=${t.id}
+                           )}"
+                           target="_blank">Nová osoba</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- VÝPIS OSOB U POJISTKY (jen při editaci) -->
+        <div id="osoby" class="card mt-3" th:if="${t != null and t.id != null}">
+            <div class="card-header bg-light fw-semibold">Osoby na které se tato pojistka vztahuje</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th>Jméno</th>
+                        <th>Role</th>
+                        <th class="text-end">Akce</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="o : ${osobyKpojistce}">
+                        <td>
+                            <a th:href="@{|/pojistenci/detail/${o.id}|}"
+                               th:text="${(o.jmeno == null ? '' : o.jmeno) + ' ' + (o.prijmeni == null ? '' : o.prijmeni)}">Jméno</a>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${o.role}=='POJISTNIK' ? ' text-bg-primary' : ' text-bg-secondary'"
+                                  th:text="${o.role}">POJISTENY</span>
+                        </td>
+                        <td class="text-end">
+                            <form th:action="@{|/pojistky/${t.id}/odebrat-osobu|}" method="post" class="d-inline"
+                                  onsubmit="return confirm('Odebrat osobu z pojistky?')">
+                                <input type="hidden" name="osobaId" th:value="${o.id}"/>
+                                <input type="hidden" name="role" th:value="${o.role}"/>
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button class="btn btn-sm btn-outline-danger">Odebrat</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${osobyKpojistce == null or #lists.isEmpty(osobyKpojistce)}">
+                        <td colspan="3" class="text-center text-muted py-3">Zatím nejsou navázané žádné osoby.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+              'use strict';
+              const form = document.querySelector('.needs-validation');
+              if (!form) return;
+              form.addEventListener('submit', function (e) {
+                if (!form.checkValidity()) { e.preventDefault(); e.stopPropagation(); }
+                // UX: kdyby někdo napsal čárku, přepiš na tečku
+                const castka = form.querySelector('#castka');
+                if (castka && castka.value.includes(',')) castka.value = castka.value.replace(',', '.');
+                form.classList.add('was-validated');
+              }, false);
+            })();
+        </script>
+
+    </section>
+</th:block>
+</html>

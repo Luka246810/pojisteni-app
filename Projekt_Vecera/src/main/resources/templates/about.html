@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>O aplikaci</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="about-page">
+<th:block th:replace="~{layout :: main(~{::section})}">
+    <section class="container pt-5 pb-4">
+        <div class="card about-card shadow-sm">
+            <div class="card-header">O aplikaci</div>
+            <div class="card-body">
+                <p>
+                    <strong>PojištěníApp</strong> je ukázková webová aplikace pro evidenci pojištěnců,
+                    jejich pojistek a pojistných událostí. Je to můj první studijní projekt, na kterém
+                    postupně rozvíjím znalosti v oblasti <em>Spring Boot</em>, databází a webového vývoje.
+                </p>
+
+                <h5 class="mt-4">Klíčové funkce</h5>
+                <ul>
+                    <li><strong>CRUD operace</strong> nad pojištěnci, pojistkami a pojistnými událostmi</li>
+                    <li><strong>Vazby mezi osobami v pojistce</strong> (role <code>POJISTNIK</code> / <code>POJISTENY</code>) – přehledné badge</li>
+                    <li><strong>Detail pojistky pro uživatele (USER)</strong> v režimu pouze pro čtení <strong>pouze vlastní pojistky</strong> (bez editace/mazání)</li>
+                    <li><strong>Uživatelské účty a role</strong> (<code>ADMIN</code> / <code>USER</code>) – rozdílná oprávnění</li>
+                    <li><strong>Přihlášení, registrace a obnova hesla</strong> (tokenový reset), hesla šifrovaná přes BCrypt</li>
+                    <li><strong>Reporty a statistiky</strong> + <strong>export CSV</strong></li>
+                    <li><strong>Responzivní UI</strong> v Bootstrapu, vlastní styly, avatar dle pohlaví</li>
+                    <li><strong>Demo režim</strong> s předvyplněnými daty (viz README)</li>
+                </ul>
+
+                <h5 class="mt-4">Použité technologie</h5>
+                <ul class="tech-list">
+                    <li>Java 21, Spring Boot 3.3.x</li>
+                    <li>Spring Data JPA (Hibernate), Bean Validation</li>
+                    <li>Spring Security 6 + Thymeleaf Extras</li>
+                    <li>Thymeleaf šablony a fragmenty</li>
+                    <li>Bootstrap 5 + vlastní CSS</li>
+                    <li>MariaDB/MySQL</li>
+                    <li>Maven (build), volitelně Docker Compose pro DB</li>
+                    <li>Lombok (snížení boilerplate kódu)</li>
+                </ul>
+
+                <h5 class="mt-4">Architektura &amp; kvalita</h5>
+                <ul>
+                    <li><strong>MVC</strong> rozdělení: Controller → Service → Repository (bez přímého volání repozitářů z kontrolerů)</li>
+                    <li><strong>DTO/Record</strong> objekty pro přenos do šablon a pro reporty</li>
+                    <li><strong>Autorizace</strong> na serveru přes <code>@PreAuthorize</code> (nejen v UI)</li>
+                    <li><strong>Validace vstupů</strong> pomocí anotací a chybových hlášek ve formulářích</li>
+                    <li><strong>Flash zprávy / toasty</strong> pro potvrzení akcí a chyby</li>
+                </ul>
+
+                <h5 class="mt-4">Databáze &amp; spuštění</h5>
+                <ul>
+                    <li>Inicializační skript <code>init.sql</code> s demo daty</li>
+                    <li>Konfigurace v <code>application.properties</code> a <code>application-demo.properties</code></li>
+                    <li>Podrobný návod „Jak spustit“, demo přístupy a Docker varianta jsou popsány v <strong>README.md</strong></li>
+                </ul>
+
+                <p class="mb-0 mt-4">
+                    Projekt průběžně rozšiřuji – slouží mi jako praktická ukázka práce s backendem,
+                    frontendem i databází. 🙂
+                </p>
+            </div>
+        </div>
+    </section>
+</th:block>
+</body>
+</html>

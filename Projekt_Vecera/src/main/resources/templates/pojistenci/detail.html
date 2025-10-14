@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="cs"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <title>Detail pojištěnce</title>
+</head>
+<body>
+<!--
+    ŠABLONA: Detail pojištěnce
+    Kontext/Model:
+      - p .......... vecera.projekt.entity.Pojisteny (detail pojištěnce)
+      - pojistky ... List<TypPojisteni> (sjednaná pojištění tohoto pojištěnce)
+      - udalosti ... List<PojistnaUdalost> (události svázané s pojištěncem)
+      - pohlaviView  (řetězec "muz" | "zena" | "jine") — pro výběr avataru (volitelné)
+    Bezpečnost:
+      - sec:authorize používá role k zobrazení správných tlačítek
+    Pozn.:
+      - avatar si pamatuje volbu pohlaví v localStorage (neukládá se do DB)
+-->
+<th:block th:replace="~{layout :: main(~{::section})}">
+    <section class="container my-4">
+
+        <!-- HLAVIČKA s avatarem a rychlými odkazy -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <!-- Levý blok: avatar + navigační tlačítka -->
+                    <div class="col-md-8 d-flex align-items-center gap-3">
+                        <!-- Avatar: soubor z /img/avatars/{muz|zena|jine}.png;
+                             data-id a data-flash využívá skript dole. -->
+                        <img id="avatarDetail"
+                             class="img-fluid rounded shadow-sm border"
+                             th:src="@{/img/avatars/{f}.png(f=${pohlaviView != null ? pohlaviView : 'jine'})}"
+                             alt="Avatar"
+                             style="width:96px;height:96px;object-fit:cover;border-radius:.5rem;"
+                             th:attr="data-id=${p.id},data-flash=${pohlaviView}">
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <!-- Administrátor: návrat na seznam -->
+                            <div sec:authorize="hasRole('ADMIN')">
+                                <a th:href="@{/pojistenci}" class="btn btn-outline-secondary">← Zpět na seznam pojištěnců</a>
+                            </div>
+                            <!-- Běžný uživatel: návrat domů / na účet -->
+                            <div sec:authorize="hasRole('USER')">
+                                <a th:href="@{/}" class="btn btn-outline-secondary">← Zpět na úvodní stránku</a>
+                                <a th:href="@{/ucet}" class="btn btn-warning">← Můj účet</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pravý blok: základní údaje pojištěnce -->
+                    <div class="col-md-4">
+                        <div class="card shadow-sm p-3 text-start h-100">
+                            <div><strong>Jméno:</strong> <span th:text="${p.jmeno}">Jméno</span></div>
+                            <div><strong>Příjmení:</strong> <span th:text="${p.prijmeni}">Příjmení</span></div>
+                            <div><strong>Věk:</strong> <span th:text="${p.vek}">49</span></div>
+                            <div><strong>Telefon:</strong> <span th:text="${p.telefon}">888 999 777</span></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SEZNAM SJEDNANÝCH POJIŠTĚNÍ -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">Sjednaná pojištění</h4>
+        </div>
+
+        <div class="table-responsive mb-4">
+            <table class="table table-hover align-middle">
+                <colgroup>
+                    <col style="width:30%">
+                    <col style="width:15%">
+                    <col style="width:20%">
+                    <col style="width:20%">
+                    <col style="width:15%">
+                </colgroup>
+                <thead class="table-light">
+                <tr>
+                    <th>Pojištění</th>
+                    <th class="text-end">Částka</th>
+                    <th>Platnost od</th>
+                    <th>Platnost do</th>
+                    <th class="text-end" style="width:220px">Akce</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- řádek pro každou pojistku -->
+                <tr th:each="t : ${pojistky}">
+                    <td>
+                        <a th:href="@{/pojistky/detail/{id}(id=${t.id})}" th:text="${t.nazev}">Pojištění</a>
+                    </td>
+
+                    <!-- formát částky (bez oddělovače tisíců) + "Kč" -->
+                    <td class="text-end"
+                        th:text="${#numbers.formatDecimal(t.castka, 0, 'NONE', 2, 'POINT')} + ' Kč'">
+                        1505.25 Kč
+                    </td>
+
+                    <!-- platnost od/do; když je null, zobrazí '-' -->
+                    <td>
+                        <span th:if="${t.platnostOd != null}"
+                              th:text="${#temporals.format(t.platnostOd, 'dd.MM.yyyy')}">01.01.2025</span>
+                        <span th:if="${t.platnostOd == null}">-</span>
+                    </td>
+                    <td>
+                        <span th:if="${t.platnostDo != null}"
+                              th:text="${#temporals.format(t.platnostDo, 'dd.MM.yyyy')}">31.12.2025</span>
+                        <span th:if="${t.platnostDo == null}">-</span>
+                    </td>
+
+                    <!-- akce k pojistce (jen ADMIN) -->
+                    <td class="text-end">
+                        <div sec:authorize="hasRole('ADMIN')" class="d-inline-flex gap-2">
+                            <form th:action="@{/pojistky/delete/{id}(id=${t.id})}" method="post" class="d-inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Smazat pojištění?')">Odstranit</button>
+                            </form>
+                            <a th:href="@{/pojistky/edit/{id}(id=${t.id})}" class="btn btn-sm btn-warning">Editovat</a>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- fallback, když nejsou žádné pojistky -->
+                <tr th:if="${#lists.isEmpty(pojistky)}">
+                    <td colspan="5" class="text-center text-muted py-4">Žádné pojištění nenalezeno.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SEZNAM POJISTNÝCH UDÁLOSTÍ -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">Pojistné události</h4>
+        </div>
+        <div class="card mt-4 shadow-sm">
+            <div class="card-header bg-light fw-semibold">
+                Pojistné události
+            </div>
+            <div class="card-body p-0">
+                <table class="table mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th style="width:14rem;">Datum</th>
+                        <th>Popis</th>
+                        <th style="width:14rem;">Škoda</th>
+                        <th style="width:10rem;">Stav</th>
+                        <th style="width:16rem;" class="text-end">Akce</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- řádek pro každou událost -->
+                    <tr th:each="u : ${udalosti}">
+                        <td th:text="${#temporals.format(u.datum,'d.M.yyyy')}">—</td>
+                        <td th:text="${u.popis}">—</td>
+                        <td th:text="${#numbers.formatDecimal(u.skoda,1,'WHITESPACE',2,'POINT')} + ' Kč'">0</td>
+                        <td th:text="${u.stav}">NOVA</td>
+                        <td class="text-end">
+                            <div sec:authorize="hasRole('ADMIN')" class="d-inline-flex gap-2">
+                                <form th:action="@{/udalosti/delete/{id}(id=${u.id})}"
+                                      method="post" class="d-inline">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Smazat událost?')">Odstranit</button>
+                                </form>
+                                <a class="btn btn-sm btn-warning"
+                                   th:href="@{/udalosti/edit/{id}(id=${u.id})}">Editovat</a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- fallback, když nejsou žádné události -->
+                    <tr th:if="${udalosti == null or #lists.isEmpty(udalosti)}">
+                        <td colspan="5" class="text-center text-muted py-3">Žádné události</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Dole: akce k pojištěnci (jen ADMIN) -->
+        <div class="mt-3 d-flex gap-2" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/pojistky/novy-k-pojistenci/{pojistenyId}(pojistenyId=${p.id})}"
+               class="btn btn-primary">Přidat pojištění</a>
+            <a th:href="@{/udalosti/novy-k-pojistenci/{id}(id=${p.id})}" class="btn btn-primary">Přidat událost</a>
+            <a th:href="@{/pojistenci/edit/{id}(id=${p.id})}" class="btn btn-warning">Editovat pojištěnce</a>
+            <form th:action="@{/pojistenci/delete/{id}(id=${p.id})}" method="post" class="d-inline">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Smazat pojištěnce?')">
+                    Odstranit pojištěnce
+                </button>
+            </form>
+        </div>
+
+        <!-- Skript avataru: načte/pamatuje volbu pohlaví v localStorage pro dané ID -->
+        <script>
+            (function () {
+              const img = document.getElementById('avatarDetail');
+              if (!img) return;
+
+              const id = img.getAttribute('data-id');
+              const base = '/img/avatars/';
+              const flashVal = img.getAttribute('data-flash');
+
+              if (flashVal && flashVal.trim() !== '') {
+                localStorage.setItem('pojistenyGender_' + id, flashVal.toLowerCase());
+              }
+
+              const saved = localStorage.getItem('pojistenyGender_' + id);
+              const gender = (saved && saved.trim() !== '') ? saved : (flashVal || 'jine');
+              img.src = base + gender + '.png';
+            })();
+        </script>
+    </section>
+</th:block>
+</body>
+</html>
