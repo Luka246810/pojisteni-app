@@ -9,13 +9,13 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      # Použijeme JEDEN soubor: ten v resources
       - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      test: ["CMD-SHELL", "mariadb -uroot -proot -e 'SELECT 1' >/dev/null 2>&1"]
       interval: 5s
       timeout: 3s
       retries: 20
+      start_period: 30s
 
   app:
     build:
