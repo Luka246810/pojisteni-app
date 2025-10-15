@@ -216,3 +216,9 @@ mvn clean spring-boot:run -Dspring-boot.run.profiles=demo
 # http://localhost:8080
 ```
 ```
+---
+
+### Poznámky k Docker Compose
+**Healthcheck DB:** Služba MariaDB má v `docker-compose.yml` nastavený `healthcheck`, takže aplikace startuje až ve chvíli, kdy je databáze skutečně připravená (méně chyb při prvním spuštění).
+
+**UTF-8 konfigurace:** Konfigurační `.properties` soubory jsou uloženy v UTF-8 (bez BOM), aby správně fungovala diakritika napříč systémy a kontejnery.
