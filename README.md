@@ -45,17 +45,19 @@ src/main/resources/db/init.sql                  # dump databáze (schéma + demo
 > **Pozn.:** Docker varianta používá **resources/db/init.sql**. Pro ruční import přes phpMyAdmin je v kořeni projektu ještě `projekt_pojistovna.sql`.
 
 ---
+## Jak spustit (Varianta A - Docker Compose)
 
-## Jak spustit (varianta A – **Docker Compose**)
-
-Uživatel nepotřebuje instalovat MariaDB/XAMPP. Vše naběhne **jedním příkazem**.
-
-1. Nainstaluj **Docker Desktop** (Win/Mac) nebo Docker (Linux).
-2. V kořeni projektu spusť:
+0. Nainstaluj **Docker Desktop** (Windows/macOS) nebo **Docker** (Linux).
+1. Otevři **Git Bash** ve složce, kam chceš projekt stáhnout, a naklonuj repozitář:
    ```bash
-   docker compose up --build
-   ```
-3. Otevři **http://localhost:8080**
+   git clone https://github.com/Luka246810/pojisteni-app.git
+2. Přejdi do složky projektu:
+   ```bash
+   cd "pojisteni-app"
+3. Spusť aplikaci (build + start):
+   ```bash
+   docker compose up -d --build
+4. Otevři v prohlížeči:  http://localhost:8080/
 
 Co se stane:
 - Spustí se **MariaDB** v kontejneru a **jednou** se naimportuje `src/main/resources/db/init.sql`.
