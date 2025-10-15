@@ -113,7 +113,7 @@ mvn clean spring-boot:run -Dspring-boot.run.profiles=demo
 ```
 Nech okno běžet; čekej hlášku „Tomcat started on port 8080“.
 
-7) Otevři web: http://localhost:8080
+6) Otevři web: http://localhost:8080
 
 
 Co se stane:
