@@ -74,19 +74,47 @@ Co se stane:
 
 Nemáš Docker? Nevadí. Aplikace si při startu **sama** naimportuje `init.sql` do lokální DB.
 
-1. Spusť **MariaDB/MySQL** (např. XAMPP).  
-   Výchozí očekávané připojení v DEMO profilu:
-   ```
-   jdbc:mariadb://localhost:3306/projekt_pojistovna_demo
-   uživatel: root
-   heslo: (prázdné)
-   ```
-   (Vše lze změnit v `src/main/resources/application-demo.properties`.)
-2. V kořeni projektu spusť:
-   ```bash
-   mvn clean spring-boot:run -Dspring-boot.run.profiles=demo
-   ```
-3. Otevři **http://localhost:8080**
+### 1) Spusť **MariaDB/MySQL** (např. XAMPP)
+
+### 2) Nainstaluj Maven (Windows – bez admina, přes Scoop)
+Otevři **PowerShell (ne admin)** a postupně zadej:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
+iwr -useb get.scoop.sh | iex
+scoop install maven
+```
+
+3a) Stáhni projekt (Git Bash)
+```bash
+git clone https://github.com/Luka246810/pojisteni-app.git
+```
+3b) Přejdi do složky projektu
+```
+cd "pojisteni-app"
+```
+
+4a) Spusť lokální DB (XAMPP → MySQL)
+
+4b) Otevři XAMPP Control Panel
+
+4c) U MySQL klikni Start (zelené)
+
+4d) Klikni Shell (vpravo v XAMPP panelu) a vytvoř DB:
+
+```bash
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS projekt_pojistovna_demo CHARACTER SET utf8mb4 COLLATE utf8mb4_czech_ci;"
+```
+(Pokud má root heslo, použij -p a heslo zadej po výzvě.)
+
+
+5) Spusť aplikaci s profilem demo (Git Bash ve složce projektu)
+```bash
+mvn clean spring-boot:run -Dspring-boot.run.profiles=demo
+```
+Nech okno běžet; čekej hlášku „Tomcat started on port 8080“.
+
+7) Otevři web: http://localhost:8080
+
 
 Co se stane:
 - Aplikace **nemění schéma** (má `ddl-auto=none`).
