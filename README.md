@@ -125,19 +125,37 @@ Co se stane:
 
 ---
 
-## Jak spustit (varianta C – **bez dumpu**, čistě z entit)
+### Jak spustit (varianta C – bez dumpu, čistě z entit) (NEDOPORUČENO - hned neuvidíte odlišné pohledy z uživatele / admina)
 
-Chceš prázdnou DB a seedovat si data sám? Nech aplikaci vytvořit tabulky z JPA entit.
+Chci prázdnou DB a tabulky z JPA entit (bez seed dat):
 
-1. V `src/main/resources/application.properties` nastav:
-   ```properties
-   spring.jpa.hibernate.ddl-auto=update
-   ```
-2. Spusť:
-   ```bash
-   mvn clean spring-boot:run
-   ```
-3. Aplikace vytvoří **prázdné** tabulky; data si založíš ručně (registrace, …).
+1) Ve složce: Git Bash here
+```
+git clone https://github.com/Luka246810/pojisteni-app.git
+
+cd "pojisteni-app"
+```
+
+2) XAMPP → MySQL **Start**, pak v **Shell** vytvoř prázdnou DB:
+   
+```
+mysql -u root -e "DROP DATABASE IF EXISTS pojistovna_entities; CREATE DATABASE pojistovna_entities CHARACTER SET utf8mb4 COLLATE utf8mb4_czech_ci;"
+```
+
+3) V kořeni projektu: (Bash)
+```
+mvn -DskipTests package
+
+java -jar target/*.jar \
+  --spring.datasource.url=jdbc:mariadb://localhost:3306/pojistovna_entities \
+  --spring.datasource.username=root \
+  --spring.datasource.password= \
+  --spring.jpa.hibernate.ddl-auto=create \
+  --spring.sql.init.mode=never \
+  --spring.profiles.active=
+```
+
+Pozn.: Neběží žádný profil (demo), import SQL je vypnutý. Tabulky se vytvoří čistě z entit a budou prázdné. (Žádné účty - nutná registrace) 
 
 ---
 
