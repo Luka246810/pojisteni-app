@@ -47,8 +47,8 @@ CREATE TABLE `pojisteny` (
 
 INSERT INTO `pojisteny` (`id`, `jmeno`, `prijmeni`, `telefon`, `vek`, `email`, `pohlavi`, `mesto`, `ulice`, `cislo_popisne`, `psc`) VALUES
 (7, 'Petr', 'Mráček', '+420 111 222 333', 35, 'p-mrak@gmail.com', 'muz', 'Drahanovice', 'Ludéřov', '58', '783 55'),
-(8, 'Eva ', 'Večeřová', '+420 111 222 333', 49, 'yes@no.cz', NULL, 'Drahanovice', 'Mrkvova', '75', '987 44'),
-(14, 'Lukáš', 'Večeřa', '+420 737 555 565', 29, 'zdar6810@gmail.com', NULL, 'Olomouc', 'Střížov', '78', '783 44'),
+(8, 'Eva ', 'Večová', '+420 111 222 333', 49, 'yes@no.cz', NULL, 'Drahanovice', 'Mrkvova', '75', '987 44'),
+(14, 'Lukáš', 'Pátek', '+420 738 555 565', 29, 'zdar@gmail.com', NULL, 'Olomouc', 'Střížkov', '78', '783 44'),
 (15, 'Petr', 'Petrovič', '///', 15, NULL, NULL, 'Litovel', 'Dolní', '51', '999 88'),
 (16, 'user', 'user', '888 777 444', 38, 'user@user.cz', NULL, 'Praha', 'Userova', '99', '222 22');
 
